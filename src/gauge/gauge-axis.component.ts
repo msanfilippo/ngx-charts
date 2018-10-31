@@ -1,11 +1,6 @@
-import {
-  Component,
-  Input,
-  OnChanges,
-  SimpleChanges,
-  ChangeDetectionStrategy
-} from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { line } from 'd3-shape';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'g[ngx-charts-gauge-axis]',
@@ -30,22 +25,37 @@ import { line } from 'd3-shape';
         </svg:g>
     </svg:g>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [DatePipe]
 })
 export class GaugeAxisComponent implements OnChanges {
-  @Input() bigSegments: any;
-  @Input() smallSegments: any;
-  @Input() min: any;
-  @Input() max: any;
-  @Input() angleSpan: number;
-  @Input() startAngle: number;
-  @Input() radius: any;
-  @Input() valueScale: any;
-  @Input() tickFormatting: any;
+  @Input()
+  bigSegments: any;
+  @Input()
+  smallSegments: any;
+  @Input()
+  min: number;
+  @Input()
+  max: number;
+  @Input()
+  angleSpan: number;
+  @Input()
+  startAngle: number;
+  @Input()
+  radius: any;
+  @Input()
+  valueScale: any;
+  @Input()
+  tickFormatting: any;
+
+  @Input()
+  valueType: any;
 
   ticks: any;
   rotationAngle: number;
   rotate: string = '';
+
+  constructor(private datePipe: DatePipe) {}
 
   ngOnChanges(changes: SimpleChanges) {
     this.update();
@@ -53,13 +63,13 @@ export class GaugeAxisComponent implements OnChanges {
 
   update(): void {
     this.rotationAngle = -90 + this.startAngle;
-    this.rotate = `rotate(${ this.rotationAngle })`;
+    this.rotate = `rotate(${this.rotationAngle})`;
     this.ticks = this.getTicks();
   }
 
   getTicks(): any {
     const bigTickSegment = this.angleSpan / this.bigSegments;
-    const smallTickSegment = bigTickSegment / (this.smallSegments);
+    const smallTickSegment = bigTickSegment / this.smallSegments;
     const tickLength = 20;
     const ticks = {
       big: [],
@@ -71,7 +81,7 @@ export class GaugeAxisComponent implements OnChanges {
 
     for (let i = 0; i <= this.bigSegments; i++) {
       const angleDeg = i * bigTickSegment;
-      const angle = angleDeg * Math.PI / 180;
+      const angle = (angleDeg * Math.PI) / 180;
 
       const textAnchor = this.getTextAnchor(angleDeg);
 
@@ -81,16 +91,21 @@ export class GaugeAxisComponent implements OnChanges {
       }
 
       if (!skip) {
-        let text = Number.parseFloat(this.valueScale.invert(angleDeg).toString()).toLocaleString();
+/*         let text = Number.parseFloat(this.valueScale.invert(angleDeg).toString()).toLocaleString(); */
+
+        let text = this.valueScale.invert(angleDeg);
+        console.log(text);
+        const dat = new Date(text);
+        
         if (this.tickFormatting) {
           text = this.tickFormatting(text);
         }
         ticks.big.push({
           line: this.getTickPath(startDistance, tickLength, angle),
           textAnchor,
-          text,
+          text:  this.datePipe.transform(dat, 'hh:mm:ss'),
           textTransform: `
-            translate(${textDist * Math.cos(angle)}, ${textDist * Math.sin(angle)}) rotate(${ -this.rotationAngle })
+            translate(${textDist * Math.cos(angle)}, ${textDist * Math.sin(angle)}) rotate(${-this.rotationAngle})
           `
         });
       }
@@ -101,7 +116,7 @@ export class GaugeAxisComponent implements OnChanges {
 
       for (let j = 1; j <= this.smallSegments; j++) {
         const smallAngleDeg = angleDeg + j * smallTickSegment;
-        const smallAngle = smallAngleDeg * Math.PI / 180;
+        const smallAngle = (smallAngleDeg * Math.PI) / 180;
 
         ticks.small.push({
           line: this.getTickPath(startDistance, tickLength / 2, smallAngle)
@@ -134,9 +149,10 @@ export class GaugeAxisComponent implements OnChanges {
     const x1 = startDistance * Math.cos(angle);
     const x2 = (startDistance + tickLength) * Math.cos(angle);
 
-    const points = [{x: x1, y: y1}, {x: x2, y: y2}];
-    const lineGenerator = line<any>().x(d => d.x).y(d => d.y);
+    const points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+    const lineGenerator = line<any>()
+      .x(d => d.x)
+      .y(d => d.y);
     return lineGenerator(points);
   }
-
 }

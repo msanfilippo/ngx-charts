@@ -79,8 +79,8 @@
   "peerDependencies": {
     "@angular/animations": "7.x",
     "@angular/cdk": "7.x",
-    "@angular/core": "7.x",
     "@angular/common": "7.x",
+    "@angular/core": "7.x",
     "@angular/forms": "7.x",
     "@angular/platform-browser": "7.x",
     "@angular/platform-browser-dynamic": "7.x",
