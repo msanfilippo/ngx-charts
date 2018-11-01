@@ -1,5 +1,5 @@
 import { ApplicationRef, ComponentFactoryResolver, Injectable, Injector, Input, Component, ElementRef, ViewEncapsulation, HostListener, ViewChild, HostBinding, Renderer2, Directive, Output, EventEmitter, ViewContainerRef, NgModule, ChangeDetectionStrategy, ChangeDetectorRef, NgZone, TemplateRef, ContentChild } from '@angular/core';
-import { CommonModule, Location, LocationStrategy, PathLocationStrategy } from '@angular/common';
+import { CommonModule, Location, LocationStrategy, PathLocationStrategy, DatePipe } from '@angular/common';
 import { trigger, style, animate, transition } from '@angular/animations';
 import { DomSanitizer } from '@angular/platform-browser';
 import { rgb } from 'd3-color';
@@ -13744,8 +13744,6 @@ var GaugeComponent = /** @class */ (function (_super) {
         _this.legend = false;
         _this.legendTitle = 'Legend';
         _this.legendPosition = 'right';
-        _this.min = 0;
-        _this.max = 100;
         _this.bigSegments = 10;
         _this.smallSegments = 5;
         _this.showAxis = true;
@@ -13757,7 +13755,7 @@ var GaugeComponent = /** @class */ (function (_super) {
         _this.deactivate = new EventEmitter();
         _this.resizeScale = 1;
         _this.rotation = '';
-        _this.textTransform = '0';
+        _this.textTransform = 'scale(3.30, 3.30)';
         _this.cornerRadius = 10;
         return _this;
     }
@@ -13883,8 +13881,8 @@ var GaugeComponent = /** @class */ (function (_super) {
     GaugeComponent.prototype.scaleText = function (repeat) {
         var _this = this;
         if (repeat === void 0) { repeat = true; }
-        if (this.textValue.length === 1) {
-            this.textTransform = 'scale(3.62, 3.62)';
+        if (this.results[0].value.toString().length === 1) {
+            this.textTransform = 'scale(3.30, 3.30)';
         }
         else {
             var width = this.textEl.nativeElement.getBoundingClientRect().width;
@@ -14023,6 +14021,10 @@ var GaugeComponent = /** @class */ (function (_super) {
         __metadata("design:type", Array)
     ], GaugeComponent.prototype, "margin", void 0);
     __decorate([
+        Input(),
+        __metadata("design:type", Object)
+    ], GaugeComponent.prototype, "valueType", void 0);
+    __decorate([
         Output(),
         __metadata("design:type", typeof (_a = typeof EventEmitter !== "undefined" && EventEmitter) === "function" ? _a : Object)
     ], GaugeComponent.prototype, "activate", void 0);
@@ -14130,7 +14132,8 @@ var GaugeArcComponent = /** @class */ (function () {
 }());
 
 var GaugeAxisComponent = /** @class */ (function () {
-    function GaugeAxisComponent() {
+    function GaugeAxisComponent(datePipe) {
+        this.datePipe = datePipe;
         this.rotate = '';
     }
     GaugeAxisComponent.prototype.ngOnChanges = function (changes) {
@@ -14143,7 +14146,7 @@ var GaugeAxisComponent = /** @class */ (function () {
     };
     GaugeAxisComponent.prototype.getTicks = function () {
         var bigTickSegment = this.angleSpan / this.bigSegments;
-        var smallTickSegment = bigTickSegment / (this.smallSegments);
+        var smallTickSegment = bigTickSegment / this.smallSegments;
         var tickLength = 20;
         var ticks = {
             big: [],
@@ -14153,21 +14156,24 @@ var GaugeAxisComponent = /** @class */ (function () {
         var textDist = startDistance + tickLength + 10;
         for (var i = 0; i <= this.bigSegments; i++) {
             var angleDeg = i * bigTickSegment;
-            var angle = angleDeg * Math.PI / 180;
+            var angle = (angleDeg * Math.PI) / 180;
             var textAnchor = this.getTextAnchor(angleDeg);
             var skip = false;
             if (i === 0 && this.angleSpan === 360) {
                 skip = true;
             }
             if (!skip) {
-                var text = Number.parseFloat(this.valueScale.invert(angleDeg).toString()).toLocaleString();
+                /*         let text = Number.parseFloat(this.valueScale.invert(angleDeg).toString()).toLocaleString(); */
+                var text = this.valueScale.invert(angleDeg);
+                console.log(text);
+                var dat = new Date(text);
                 if (this.tickFormatting) {
                     text = this.tickFormatting(text);
                 }
                 ticks.big.push({
                     line: this.getTickPath(startDistance, tickLength, angle),
                     textAnchor: textAnchor,
-                    text: text,
+                    text: this.datePipe.transform(dat, 'hh:mm:ss'),
                     textTransform: "\n            translate(" + textDist * Math.cos(angle) + ", " + textDist * Math.sin(angle) + ") rotate(" + -this.rotationAngle + ")\n          "
                 });
             }
@@ -14176,7 +14182,7 @@ var GaugeAxisComponent = /** @class */ (function () {
             }
             for (var j = 1; j <= this.smallSegments; j++) {
                 var smallAngleDeg = angleDeg + j * smallTickSegment;
-                var smallAngle = smallAngleDeg * Math.PI / 180;
+                var smallAngle = (smallAngleDeg * Math.PI) / 180;
                 ticks.small.push({
                     line: this.getTickPath(startDistance, tickLength / 2, smallAngle)
                 });
@@ -14205,9 +14211,12 @@ var GaugeAxisComponent = /** @class */ (function () {
         var x1 = startDistance * Math.cos(angle);
         var x2 = (startDistance + tickLength) * Math.cos(angle);
         var points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
-        var lineGenerator = line().x(function (d) { return d.x; }).y(function (d) { return d.y; });
+        var lineGenerator = line()
+            .x(function (d) { return d.x; })
+            .y(function (d) { return d.y; });
         return lineGenerator(points);
     };
+    var _a;
     __decorate([
         Input(),
         __metadata("design:type", Object)
@@ -14218,11 +14227,11 @@ var GaugeAxisComponent = /** @class */ (function () {
     ], GaugeAxisComponent.prototype, "smallSegments", void 0);
     __decorate([
         Input(),
-        __metadata("design:type", Object)
+        __metadata("design:type", Number)
     ], GaugeAxisComponent.prototype, "min", void 0);
     __decorate([
         Input(),
-        __metadata("design:type", Object)
+        __metadata("design:type", Number)
     ], GaugeAxisComponent.prototype, "max", void 0);
     __decorate([
         Input(),
@@ -14244,12 +14253,18 @@ var GaugeAxisComponent = /** @class */ (function () {
         Input(),
         __metadata("design:type", Object)
     ], GaugeAxisComponent.prototype, "tickFormatting", void 0);
+    __decorate([
+        Input(),
+        __metadata("design:type", Object)
+    ], GaugeAxisComponent.prototype, "valueType", void 0);
     GaugeAxisComponent = __decorate([
         Component({
             selector: 'g[ngx-charts-gauge-axis]',
             template: "\n    <svg:g [attr.transform]=\"rotate\">\n        <svg:g *ngFor=\"let tick of ticks.big\"\n            class=\"gauge-tick gauge-tick-large\">\n            <svg:path [attr.d]=\"tick.line\" />\n        </svg:g>\n        <svg:g *ngFor=\"let tick of ticks.big\"\n            class=\"gauge-tick gauge-tick-large\">\n            <svg:text\n                [style.textAnchor]=\"tick.textAnchor\"\n                [attr.transform]=\"tick.textTransform\"\n                alignment-baseline=\"central\">\n                {{tick.text}}\n            </svg:text>\n        </svg:g>\n        <svg:g *ngFor=\"let tick of ticks.small\"\n            class=\"gauge-tick gauge-tick-small\">\n            <svg:path [attr.d]=\"tick.line\" />\n        </svg:g>\n    </svg:g>\n  ",
-            changeDetection: ChangeDetectionStrategy.OnPush
-        })
+            changeDetection: ChangeDetectionStrategy.OnPush,
+            providers: [DatePipe]
+        }),
+        __metadata("design:paramtypes", [typeof (_a = typeof DatePipe !== "undefined" && DatePipe) === "function" ? _a : Object])
     ], GaugeAxisComponent);
     return GaugeAxisComponent;
 }());

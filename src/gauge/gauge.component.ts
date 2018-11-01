@@ -16,6 +16,7 @@ import { scaleLinear } from 'd3-scale';
 import { BaseChartComponent } from '../common/base-chart.component';
 import { calculateViewDimensions, ViewDimensions } from '../common/view-dimensions.helper';
 import { ColorHelper } from '../common/color.helper';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'ngx-charts-gauge',
@@ -57,14 +58,16 @@ import { ColorHelper } from '../common/color.helper';
           [angleSpan]="angleSpan"
           [valueScale]="valueScale"
           [startAngle]="startAngle"
-          [tickFormatting]="axisTickFormatting">
+          [tickFormatting]="axisTickFormatting"
+          [valueType]="valueType">
         </svg:g>
 
         <svg:text #textEl
             [style.textAnchor]="'middle'"
             [attr.transform]="textTransform"
             alignment-baseline="central">
-          <tspan x="0" dy="0">{{displayValue}}</tspan>
+          <tspan *ngIf="'DURATION' === valueType" x="0" dy="0">{{displayValue | date:'hh:mm:ss'}}</tspan>
+          <tspan *ngIf="'DURATION' !== valueType" x="0" dy="0">{{displayValue}}</tspan>
         </svg:text>
 
       </svg:g>
@@ -115,7 +118,7 @@ export class GaugeComponent extends BaseChartComponent implements AfterViewInit 
   margin: any[];
 
   @Input()
-  valueType: any;
+  valueType: string;
 
   @Output()
   activate: EventEmitter<any> = new EventEmitter();
@@ -288,7 +291,9 @@ export class GaugeComponent extends BaseChartComponent implements AfterViewInit 
       return this.valueFormatting(value);
     }
 
-    return value.toLocaleString();
+    return 'DURATION' === this.valueType
+      ? new Date(value)
+      : value.toLocaleString();
   }
 
   scaleText(repeat: boolean = true): void {

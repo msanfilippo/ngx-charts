@@ -49,7 +49,7 @@ export class GaugeAxisComponent implements OnChanges {
   tickFormatting: any;
 
   @Input()
-  valueType: any;
+  valueType: string;
 
   ticks: any;
   rotationAngle: number;
@@ -91,22 +91,21 @@ export class GaugeAxisComponent implements OnChanges {
       }
 
       if (!skip) {
-/*         let text = Number.parseFloat(this.valueScale.invert(angleDeg).toString()).toLocaleString(); */
+        let text =
+          this.valueType === 'DURATION'
+            ? this.valueScale.invert(angleDeg)
+            : Number.parseFloat(this.valueScale.invert(angleDeg).toString()).toLocaleString();
 
-        let text = this.valueScale.invert(angleDeg);
-        console.log(text);
-        const dat = new Date(text);
-        
         if (this.tickFormatting) {
           text = this.tickFormatting(text);
         }
         ticks.big.push({
           line: this.getTickPath(startDistance, tickLength, angle),
           textAnchor,
-          text:  this.datePipe.transform(dat, 'hh:mm:ss'),
+          text: this.valueType === 'DURATION' ? this.datePipe.transform(new Date(text), 'hh:mm:ss') : text,
           textTransform: `
-            translate(${textDist * Math.cos(angle)}, ${textDist * Math.sin(angle)}) rotate(${-this.rotationAngle})
-          `
+              translate(${textDist * Math.cos(angle)}, ${textDist * Math.sin(angle)}) rotate(${-this.rotationAngle})
+            `
         });
       }
 
