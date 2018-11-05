@@ -12,6 +12,7 @@ export declare class GaugeAxisComponent implements OnChanges {
     valueScale: any;
     tickFormatting: any;
     valueType: string;
+    metricsColor: string;
     ticks: any;
     rotationAngle: number;
     rotate: string;

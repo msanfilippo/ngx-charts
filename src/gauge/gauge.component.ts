@@ -59,11 +59,14 @@ import { DatePipe } from '@angular/common';
           [valueScale]="valueScale"
           [startAngle]="startAngle"
           [tickFormatting]="axisTickFormatting"
-          [valueType]="valueType">
+          [valueType]="valueType"
+          [metricsColor]="this.metricsColor"
+          >
         </svg:g>
 
         <svg:text #textEl
             [style.textAnchor]="'middle'"
+            [style.fill]="this.metricsColor"
             [attr.transform]="textTransform"
             alignment-baseline="central">
           <tspan *ngIf="'DURATION' === valueType" x="0" dy="0">{{displayValue | date:'hh:mm:ss'}}</tspan>
@@ -119,6 +122,9 @@ export class GaugeComponent extends BaseChartComponent implements AfterViewInit 
 
   @Input()
   valueType: string;
+
+  @Input()
+  metricsColor: string;
 
   @Output()
   activate: EventEmitter<any> = new EventEmitter();

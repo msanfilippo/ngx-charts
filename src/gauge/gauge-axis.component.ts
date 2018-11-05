@@ -14,6 +14,7 @@ import { DatePipe } from '@angular/common';
             class="gauge-tick gauge-tick-large">
             <svg:text
                 [style.textAnchor]="tick.textAnchor"
+                [style.fill]="this.metricsColor"
                 [attr.transform]="tick.textTransform"
                 alignment-baseline="central">
                 {{tick.text}}
@@ -50,6 +51,9 @@ export class GaugeAxisComponent implements OnChanges {
 
   @Input()
   valueType: string;
+
+  @Input()
+  metricsColor: string;
 
   ticks: any;
   rotationAngle: number;
