@@ -13766,6 +13766,8 @@ var GaugeComponent = /** @class */ (function (_super) {
     };
     GaugeComponent.prototype.update = function () {
         var _this = this;
+        var a = this.min;
+        var b = this.max;
         _super.prototype.update.call(this);
         if (!this.showAxis) {
             if (!this.margin) {
@@ -13876,9 +13878,7 @@ var GaugeComponent = /** @class */ (function (_super) {
         if (this.valueFormatting) {
             return this.valueFormatting(value);
         }
-        return 'DURATION' === this.valueType
-            ? new Date(value)
-            : value.toLocaleString();
+        return 'DURATION' === this.valueType ? new Date(value) : value.toLocaleString();
     };
     GaugeComponent.prototype.scaleText = function (repeat) {
         var _this = this;
@@ -13948,6 +13948,55 @@ var GaugeComponent = /** @class */ (function (_super) {
     };
     GaugeComponent.prototype.trackBy = function (index, item) {
         return item.valueArc.data.name;
+    };
+    GaugeComponent.prototype.msToTime = function (value, arg1, arg2) {
+        var days;
+        var seconds;
+        var minutes;
+        var hours;
+        if (arg1 === 'ms' && arg2 === 'hhmmss') {
+            seconds = Math.floor((value / 1000) % 60);
+            minutes = Math.floor((value / (1000 * 60)) % 60);
+            hours = Math.floor(value / (1000 * 60 * 60));
+            return this.format(arg2, seconds, minutes, hours, days);
+        }
+        else if (arg1 === 's' && arg2 === 'hhmmss') {
+            seconds = Math.floor(value % 60);
+            minutes = Math.floor((value / 60) % 60);
+            hours = Math.floor(value / 60 / 60);
+            return this.format(arg2, seconds, minutes, hours, days);
+        }
+        else if (arg1 === 'ms' && (arg2 === 'ddhhmmss' || arg2 === 'ddhhmmssLong')) {
+            seconds = Math.floor((value / 1000) % 60);
+            minutes = Math.floor((value / (1000 * 60)) % 60);
+            hours = Math.floor((value / (1000 * 60 * 60)) % 24);
+            days = Math.floor(value / (1000 * 60 * 60 * 24));
+            return this.format(arg2, seconds, minutes, hours, days);
+        }
+        else if (arg1 === 's' && (arg2 === 'ddhhmmss' || arg2 === 'ddhhmmssLong')) {
+            seconds = Math.floor(value % 60);
+            minutes = Math.floor((value / 60) % 60);
+            hours = Math.floor((value / 60 / 60) % 24);
+            days = Math.floor(value / 60 / 60 / 24);
+            return this.format(arg2, seconds, minutes, hours, days);
+        }
+        else {
+            return value;
+        }
+    };
+    GaugeComponent.prototype.format = function (arg2, seconds, minutes, hours, days) {
+        days < 10 ? (days = '0' + days) : days;
+        hours < 10 ? (hours = '0' + hours) : hours;
+        minutes < 10 ? (minutes = '0' + minutes) : minutes;
+        seconds < 10 ? (seconds = '0' + seconds) : seconds;
+        switch (arg2) {
+            case 'hhmmss':
+                return hours + ":" + minutes + ":" + seconds;
+            case 'ddhhmmss':
+                return days + "d, " + hours + "h, " + minutes + "m, " + seconds + "s";
+            case 'ddhhmmssLong':
+                return days + " days, " + hours + " hours, " + minutes + " minutes, " + seconds + " seconds";
+        }
     };
     var _a, _b, _c, _d;
     __decorate([
@@ -14049,7 +14098,7 @@ var GaugeComponent = /** @class */ (function (_super) {
     GaugeComponent = __decorate([
         Component({
             selector: 'ngx-charts-gauge',
-            template: "\n    <ngx-charts-chart\n      [view]=\"[width, height]\"\n      [showLegend]=\"legend\"\n      [legendOptions]=\"legendOptions\"\n      [activeEntries]=\"activeEntries\"\n      [animations]=\"animations\"\n      (legendLabelClick)=\"onClick($event)\"\n      (legendLabelActivate)=\"onActivate($event)\"\n      (legendLabelDeactivate)=\"onDeactivate($event)\">\n      <svg:g [attr.transform]=\"transform\" class=\"gauge chart\">\n        <svg:g *ngFor=\"let arc of arcs; trackBy:trackBy\" [attr.transform]=\"rotation\">\n          <svg:g ngx-charts-gauge-arc\n            [backgroundArc]=\"arc.backgroundArc\"\n            [valueArc]=\"arc.valueArc\"\n            [cornerRadius]=\"cornerRadius\"\n            [colors]=\"colors\"\n            [isActive]=\"isActive(arc.valueArc.data)\"\n            [tooltipDisabled]=\"tooltipDisabled\"\n            [tooltipTemplate]=\"tooltipTemplate\"\n            [valueFormatting]=\"valueFormatting\"\n            [animations]=\"animations\"\n            (select)=\"onClick($event)\"\n            (activate)=\"onActivate($event)\"\n            (deactivate)=\"onDeactivate($event)\">\n          </svg:g>\n        </svg:g>\n\n        <svg:g ngx-charts-gauge-axis\n          *ngIf=\"showAxis\"\n          [bigSegments]=\"bigSegments\"\n          [smallSegments]=\"smallSegments\"\n          [min]=\"min\"\n          [max]=\"max\"\n          [radius]=\"outerRadius\"\n          [angleSpan]=\"angleSpan\"\n          [valueScale]=\"valueScale\"\n          [startAngle]=\"startAngle\"\n          [tickFormatting]=\"axisTickFormatting\"\n          [valueType]=\"valueType\"\n          [metricsColor]=\"this.metricsColor\"\n          >\n        </svg:g>\n\n        <svg:text #textEl\n            [style.textAnchor]=\"'middle'\"\n            [style.fill]=\"this.metricsColor\"\n            [attr.transform]=\"textTransform\"\n            alignment-baseline=\"central\">\n          <tspan *ngIf=\"'DURATION' === valueType\" x=\"0\" dy=\"0\">{{displayValue | date:'hh:mm:ss'}}</tspan>\n          <tspan *ngIf=\"'DURATION' !== valueType\" x=\"0\" dy=\"0\">{{displayValue}}</tspan>\n        </svg:text>\n\n      </svg:g>\n    </ngx-charts-chart>\n  ",
+            template: "\n    <ngx-charts-chart\n      [view]=\"[width, height]\" \n      [showLegend]=\"legend\"\n      [legendOptions]=\"legendOptions\"\n      [activeEntries]=\"activeEntries\"\n      [animations]=\"animations\"\n      (legendLabelClick)=\"onClick($event)\"\n      (legendLabelActivate)=\"onActivate($event)\"\n      (legendLabelDeactivate)=\"onDeactivate($event)\">\n      <svg:g [attr.transform]=\"transform\" class=\"gauge chart\">\n        <svg:g *ngFor=\"let arc of arcs; trackBy:trackBy\" [attr.transform]=\"rotation\">\n          <svg:g ngx-charts-gauge-arc\n            [backgroundArc]=\"arc.backgroundArc\"\n            [valueArc]=\"arc.valueArc\"\n            [cornerRadius]=\"cornerRadius\"\n            [colors]=\"colors\"\n            [isActive]=\"isActive(arc.valueArc.data)\"\n            [tooltipDisabled]=\"tooltipDisabled\"\n            [tooltipTemplate]=\"tooltipTemplate\"\n            [valueFormatting]=\"valueFormatting\"\n            [animations]=\"animations\"\n            (select)=\"onClick($event)\"\n            (activate)=\"onActivate($event)\"\n            (deactivate)=\"onDeactivate($event)\">\n          </svg:g>\n        </svg:g>\n\n        <svg:g ngx-charts-gauge-axis\n          *ngIf=\"showAxis\"\n          [bigSegments]=\"bigSegments\"\n          [smallSegments]=\"smallSegments\"\n          [min]=\"this.min\"\n          [max]=\"this.max\"\n          [radius]=\"outerRadius\"\n          [angleSpan]=\"angleSpan\"\n          [valueScale]=\"valueScale\"\n          [startAngle]=\"startAngle\"\n          [tickFormatting]=\"axisTickFormatting\"\n          [valueType]=\"valueType\"\n          [metricsColor]=\"this.metricsColor\"\n          >\n        </svg:g>\n\n        <svg:text #textEl\n            [style.textAnchor]=\"'middle'\"\n            [style.fill]=\"this.metricsColor\"\n            [attr.transform]=\"textTransform\"\n            alignment-baseline=\"central\">\n          <tspan *ngIf=\"'DURATION' === valueType\" x=\"0\" dy=\"0\">{{this.msToTime(displayValue,'ms', 'hhmmss')}}</tspan>\n          <tspan *ngIf=\"'DURATION' !== valueType\" x=\"0\" dy=\"0\">{{displayValue}}</tspan>\n        </svg:text>\n\n      </svg:g>\n    </ngx-charts-chart>\n  ",
             styles: [".ngx-charts{float:left;overflow:visible}.ngx-charts .arc,.ngx-charts .bar,.ngx-charts .circle{cursor:pointer}.ngx-charts .arc.active,.ngx-charts .arc:hover,.ngx-charts .bar.active,.ngx-charts .bar:hover,.ngx-charts .card.active,.ngx-charts .card:hover,.ngx-charts .cell.active,.ngx-charts .cell:hover{opacity:.8;transition:opacity .1s ease-in-out}.ngx-charts .arc:focus,.ngx-charts .bar:focus,.ngx-charts .card:focus,.ngx-charts .cell:focus{outline:0}.ngx-charts g:focus{outline:0}.ngx-charts .area-series.inactive,.ngx-charts .line-series-range.inactive,.ngx-charts .line-series.inactive,.ngx-charts .polar-series-area.inactive,.ngx-charts .polar-series-path.inactive{transition:opacity .1s ease-in-out;opacity:.2}.ngx-charts .line-highlight{display:none}.ngx-charts .line-highlight.active{display:block}.ngx-charts .area{opacity:.6}.ngx-charts .circle:hover{cursor:pointer}.ngx-charts .label{font-size:12px;font-weight:400}.ngx-charts .tooltip-anchor{fill:#000}.ngx-charts .gridline-path{stroke:#ddd;stroke-width:1;fill:none}.ngx-charts .refline-path{stroke:#a8b2c7;stroke-width:1;stroke-dasharray:5;stroke-dashoffset:5}.ngx-charts .refline-label{font-size:9px}.ngx-charts .reference-area{fill-opacity:.05;fill:#000}.ngx-charts .gridline-path-dotted{stroke:#ddd;stroke-width:1;fill:none;stroke-dasharray:1,20;stroke-dashoffset:3}.ngx-charts .grid-panel rect{fill:none}.ngx-charts .grid-panel.odd rect{fill:rgba(0,0,0,.05)}", ".gauge .background-arc path{fill:rgba(0,0,0,.05)}.gauge .gauge-tick path{stroke:#666}.gauge .gauge-tick text{font-size:12px;fill:#666;font-weight:700}.gauge .gauge-tick-large path{stroke-width:2px}.gauge .gauge-tick-small path{stroke-width:1px}"],
             encapsulation: ViewEncapsulation.None,
             changeDetection: ChangeDetectionStrategy.OnPush
@@ -14178,7 +14227,7 @@ var GaugeAxisComponent = /** @class */ (function () {
                 ticks.big.push({
                     line: this.getTickPath(startDistance, tickLength, angle),
                     textAnchor: textAnchor,
-                    text: this.valueType === 'DURATION' ? this.datePipe.transform(new Date(text), 'hh:mm:ss') : text,
+                    text: this.valueType === 'DURATION' ? this.msToTime(text, 'ms', 'hhmmss') : text,
                     textTransform: "\n              translate(" + textDist * Math.cos(angle) + ", " + textDist * Math.sin(angle) + ") rotate(" + -this.rotationAngle + ")\n            "
                 });
             }
@@ -14220,6 +14269,55 @@ var GaugeAxisComponent = /** @class */ (function () {
             .x(function (d) { return d.x; })
             .y(function (d) { return d.y; });
         return lineGenerator(points);
+    };
+    GaugeAxisComponent.prototype.msToTime = function (value, arg1, arg2) {
+        var days;
+        var seconds;
+        var minutes;
+        var hours;
+        if (arg1 === 'ms' && arg2 === 'hhmmss') {
+            seconds = Math.floor((value / 1000) % 60);
+            minutes = Math.floor((value / (1000 * 60)) % 60);
+            hours = Math.floor(value / (1000 * 60 * 60));
+            return this.format(arg2, seconds, minutes, hours, days);
+        }
+        else if (arg1 === 's' && arg2 === 'hhmmss') {
+            seconds = Math.floor(value % 60);
+            minutes = Math.floor((value / 60) % 60);
+            hours = Math.floor(value / 60 / 60);
+            return this.format(arg2, seconds, minutes, hours, days);
+        }
+        else if (arg1 === 'ms' && (arg2 === 'ddhhmmss' || arg2 === 'ddhhmmssLong')) {
+            seconds = Math.floor((value / 1000) % 60);
+            minutes = Math.floor((value / (1000 * 60)) % 60);
+            hours = Math.floor((value / (1000 * 60 * 60)) % 24);
+            days = Math.floor(value / (1000 * 60 * 60 * 24));
+            return this.format(arg2, seconds, minutes, hours, days);
+        }
+        else if (arg1 === 's' && (arg2 === 'ddhhmmss' || arg2 === 'ddhhmmssLong')) {
+            seconds = Math.floor(value % 60);
+            minutes = Math.floor((value / 60) % 60);
+            hours = Math.floor((value / 60 / 60) % 24);
+            days = Math.floor(value / 60 / 60 / 24);
+            return this.format(arg2, seconds, minutes, hours, days);
+        }
+        else {
+            return value;
+        }
+    };
+    GaugeAxisComponent.prototype.format = function (arg2, seconds, minutes, hours, days) {
+        days < 10 ? (days = '0' + days) : days;
+        hours < 10 ? (hours = '0' + hours) : hours;
+        minutes < 10 ? (minutes = '0' + minutes) : minutes;
+        seconds < 10 ? (seconds = '0' + seconds) : seconds;
+        switch (arg2) {
+            case 'hhmmss':
+                return hours + ":" + minutes + ":" + seconds;
+            case 'ddhhmmss':
+                return days + "d, " + hours + "h, " + minutes + "m, " + seconds + "s";
+            case 'ddhhmmssLong':
+                return days + " days, " + hours + " hours, " + minutes + " minutes, " + seconds + " seconds";
+        }
     };
     var _a;
     __decorate([
@@ -14288,7 +14386,7 @@ var GaugeModule = /** @class */ (function () {
                 LinearGaugeComponent,
                 GaugeComponent,
                 GaugeArcComponent,
-                GaugeAxisComponent
+                GaugeAxisComponent,
             ],
             exports: [
                 LinearGaugeComponent,

@@ -22,4 +22,6 @@ export declare class GaugeAxisComponent implements OnChanges {
     getTicks(): any;
     getTextAnchor(angle: any): string;
     getTickPath(startDistance: any, tickLength: any, angle: any): any;
+    msToTime(value: any, arg1: any, arg2: any): any;
+    private format;
 }

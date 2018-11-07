@@ -22,7 +22,7 @@ var GaugeModule = /** @class */ (function () {
                 LinearGaugeComponent,
                 GaugeComponent,
                 GaugeArcComponent,
-                GaugeAxisComponent
+                GaugeAxisComponent,
             ],
             exports: [
                 LinearGaugeComponent,

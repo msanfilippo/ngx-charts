@@ -13,7 +13,7 @@ import { BarChartModule } from '../bar-chart/bar-chart.module';
     LinearGaugeComponent,
     GaugeComponent,
     GaugeArcComponent,
-    GaugeAxisComponent
+    GaugeAxisComponent,
   ],
   exports: [
     LinearGaugeComponent,

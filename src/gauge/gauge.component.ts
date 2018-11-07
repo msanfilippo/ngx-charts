@@ -9,7 +9,8 @@ import {
   EventEmitter,
   ViewEncapsulation,
   ContentChild,
-  TemplateRef
+  TemplateRef,
+  OnInit
 } from '@angular/core';
 import { scaleLinear } from 'd3-scale';
 
@@ -22,7 +23,7 @@ import { DatePipe } from '@angular/common';
   selector: 'ngx-charts-gauge',
   template: `
     <ngx-charts-chart
-      [view]="[width, height]"
+      [view]="[width, height]" 
       [showLegend]="legend"
       [legendOptions]="legendOptions"
       [activeEntries]="activeEntries"
@@ -52,8 +53,8 @@ import { DatePipe } from '@angular/common';
           *ngIf="showAxis"
           [bigSegments]="bigSegments"
           [smallSegments]="smallSegments"
-          [min]="min"
-          [max]="max"
+          [min]="this.min"
+          [max]="this.max"
           [radius]="outerRadius"
           [angleSpan]="angleSpan"
           [valueScale]="valueScale"
@@ -69,7 +70,7 @@ import { DatePipe } from '@angular/common';
             [style.fill]="this.metricsColor"
             [attr.transform]="textTransform"
             alignment-baseline="central">
-          <tspan *ngIf="'DURATION' === valueType" x="0" dy="0">{{displayValue | date:'hh:mm:ss'}}</tspan>
+          <tspan *ngIf="'DURATION' === valueType" x="0" dy="0">{{this.msToTime(displayValue,'ms', 'hhmmss')}}</tspan>
           <tspan *ngIf="'DURATION' !== valueType" x="0" dy="0">{{displayValue}}</tspan>
         </svg:text>
 
@@ -161,6 +162,9 @@ export class GaugeComponent extends BaseChartComponent implements AfterViewInit 
   }
 
   update(): void {
+    const a = this.min;
+    const b = this.max;
+
     super.update();
 
     if (!this.showAxis) {
@@ -297,9 +301,7 @@ export class GaugeComponent extends BaseChartComponent implements AfterViewInit 
       return this.valueFormatting(value);
     }
 
-    return 'DURATION' === this.valueType
-      ? new Date(value)
-      : value.toLocaleString();
+    return 'DURATION' === this.valueType ? new Date(value) : value.toLocaleString();
   }
 
   scaleText(repeat: boolean = true): void {
@@ -377,5 +379,56 @@ export class GaugeComponent extends BaseChartComponent implements AfterViewInit 
 
   trackBy(index, item): string {
     return item.valueArc.data.name;
+  }
+
+  msToTime(value: any, arg1: any, arg2: any) {
+    let days: any;
+    let seconds: any;
+    let minutes: any;
+    let hours: any;
+
+    if (arg1 === 'ms' && arg2 === 'hhmmss') {
+      seconds = Math.floor((value / 1000) % 60);
+      minutes = Math.floor((value / (1000 * 60)) % 60);
+      hours = Math.floor(value / (1000 * 60 * 60));
+      return this.format(arg2, seconds, minutes, hours, days);
+    } else if (arg1 === 's' && arg2 === 'hhmmss') {
+      seconds = Math.floor(value % 60);
+      minutes = Math.floor((value / 60) % 60);
+      hours = Math.floor(value / 60 / 60);
+      return this.format(arg2, seconds, minutes, hours, days);
+    } else if (arg1 === 'ms' && (arg2 === 'ddhhmmss' || arg2 === 'ddhhmmssLong')) {
+      seconds = Math.floor((value / 1000) % 60);
+      minutes = Math.floor((value / (1000 * 60)) % 60);
+      hours = Math.floor((value / (1000 * 60 * 60)) % 24);
+      days = Math.floor(value / (1000 * 60 * 60 * 24));
+      return this.format(arg2, seconds, minutes, hours, days);
+    } else if (arg1 === 's' && (arg2 === 'ddhhmmss' || arg2 === 'ddhhmmssLong')) {
+      seconds = Math.floor(value % 60);
+      minutes = Math.floor((value / 60) % 60);
+      hours = Math.floor((value / 60 / 60) % 24);
+      days = Math.floor(value / 60 / 60 / 24);
+      return this.format(arg2, seconds, minutes, hours, days);
+    } else {
+      return value;
+    }
+  }
+
+  private format(arg2, seconds, minutes, hours, days) {
+    days < 10 ? (days = '0' + days) : days;
+    hours < 10 ? (hours = '0' + hours) : hours;
+    minutes < 10 ? (minutes = '0' + minutes) : minutes;
+    seconds < 10 ? (seconds = '0' + seconds) : seconds;
+
+    switch (arg2) {
+      case 'hhmmss':
+        return `${hours}:${minutes}:${seconds}`;
+
+      case 'ddhhmmss':
+        return `${days}d, ${hours}h, ${minutes}m, ${seconds}s`;
+
+      case 'ddhhmmssLong':
+        return `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`;
+    }
   }
 }
